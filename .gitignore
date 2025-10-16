@@ -1,0 +1,10 @@
+﻿################################################################################
+# Bu .gitignore dosyası Microsoft(R) Visual Studio tarafından otomatik olarak oluşturulmuştur.
+################################################################################
+
+/.vs/Hash-Cracker/v17
+/.vs/YK-47 Hash Cracker/FileContentIndex
+/.vs/YK-47 Hash Cracker/v17
+/YK-47 Hash Cracker/bin/Debug
+/YK-47 Hash Cracker/obj
+/.vs
