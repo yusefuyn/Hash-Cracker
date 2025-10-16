@@ -495,7 +495,7 @@
             // 
             // timer1
             // 
-            this.timer1.Interval = 2000;
+            this.timer1.Interval = 1000;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
             // bruteForceForm
@@ -510,8 +510,10 @@
             this.Controls.Add(this.panel3);
             this.Controls.Add(this.panel2);
             this.Controls.Add(this.panel1);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.MaximizeBox = false;
             this.Name = "bruteForceForm";
-            this.Text = "bruteForceForm";
+            this.Text = "[Yussefuynstein] Hash Rocker V1.1";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.bruteForceForm_FormClosing);
             this.Load += new System.EventHandler(this.bruteForceForm_Load);
             this.panel1.ResumeLayout(false);

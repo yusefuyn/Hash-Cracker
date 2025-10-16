@@ -30,9 +30,7 @@ namespace YK_47_Hash_Cracker
 
         private Manager hashMan = new Manager();
         private HashType.Type _type = HashType.Type.MD5;
-        private Thread task;
-
-        MD5 md5 = new MD5CryptoServiceProvider();
+        private CancellationTokenSource cts = null;
 
         private void btnSearchItemAdd_Click(object sender, EventArgs e)
         {
@@ -94,12 +92,14 @@ namespace YK_47_Hash_Cracker
         }
         private void bruteForceForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (task != null)
+            if (cts != null)
             {
-                if (MessageBox.Show("Yürütülen bir operasyon var durdurmak istediğinize eminmisiniz?", "Sorun !", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                var r = MessageBox.Show("Devam eden bir işlem var sonlandırmak istediğinizden eminmisiniz ?", "", MessageBoxButtons.YesNo);
+                if (r == DialogResult.Yes)
                 {
-                    task.Abort();
-                    task = null;
+                    cts.Cancel();
+                    cts = null;
+                    this.Close();
                 }
             }
         }
@@ -116,7 +116,7 @@ namespace YK_47_Hash_Cracker
             else if (comboMethod.SelectedIndex == 4)
                 _type = Create.Hash.Enumerators.HashType.Type.SHA512;
             else if (comboMethod.SelectedIndex == 5)
-                _type = Create.Hash.Enumerators.HashType.Type.SHA3256;
+                _type = Create.Hash.Enumerators.HashType.Type.SHA3256; // daha sonra sunucu kur ona yönlendir !
             else if (comboMethod.SelectedIndex == 6)
                 _type = Create.Hash.Enumerators.HashType.Type.SHA3384;
             else if (comboMethod.SelectedIndex == 7)
@@ -129,51 +129,63 @@ namespace YK_47_Hash_Cracker
         private void btnStartStop_Click(object sender, EventArgs e)
         {
 
-            lblAlphabe.Text = "";
-            bool one = false, two = false;
-            foreach (bool item in dataType)
-                if (item == true)
-                    if (one != true) { one = true; } else { two = true; break; }
-            if (one == true && two == true)
+
+
+            if (btnStartStop.Text == "Başlat")
             {
-                DialogResult res = MessageBox.Show("Çok tipli tarama gerçekleştirmek üzeresiniz doğru sonuç alamayabilirsiniz.\n\nYinede devam etmek istiyormusunuz ?", "Sorun !", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (res != DialogResult.Yes)
+
+                if (listItems.Items.Count == 0)
+                {
+                    MessageBox.Show("Lütfen aranacak değer giriniz.", "Hata !", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
-            }
+                }
 
 
-            if (listItems.Items.Count == 0)
-            {
-                MessageBox.Show("Lütfen aranacak değer giriniz.", "Hata !", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
+                if (checkBoxLowCh.Checked == false && checkBoxNum.Checked == false && checkBoxSym.Checked == false && checkBoxUpCh.Checked == false)
+                {
+                    MessageBox.Show("Lütfen kullanılacak karakter seçiniz!", "Hata !", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
 
-            if (checkBoxLowCh.Checked == false && checkBoxNum.Checked == false && checkBoxSym.Checked == false && checkBoxUpCh.Checked == false)
-            {
-                MessageBox.Show("Lütfen kullanılacak karakter seçiniz!", "Hata !", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-            else
-            {
                 if (txtLowChar.Text == "" && txtNumeric.Text == "" && txtSym.Text == "" && txtUpChar.Text == "")
                 {
                     MessageBox.Show("Lütfen kullanılacak karakterler giriniz!", "Hata !", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
-            }
 
+                lblAlphabe.Text = "";
 
+                if (dataType.Where(x => x == true).Count() > 1)
+                {
+                    DialogResult res = MessageBox.Show("Çok tipli tarama gerçekleştirmek üzeresiniz doğru sonuç alamayabilirsiniz.\n\nYinede devam etmek istiyormusunuz ?", "Sorun !", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    if (res != DialogResult.Yes)
+                        return;
+                }
 
-            if (btnStartStop.Text == "Başlat")
-            {
                 Second = 0; Minute = 0; Hour = 0; ChangePoint = 0; Tried = 0; ToBeTried = 0;
+
                 AlphabethUpdateMethod();
                 StartAndFinishWordUpdate();
-                for (int i = 1; i <= numericMaxLength.Value; i++)
-                    ToBeTried += (ulong)Math.Pow((double)Alphabeth.Length, (double)i);
-                lblToBeTried.Text = "Denenecek :" + (ToBeTried).ToString();
-                task = new Thread(() => Start());
-                task.Start();
+
+                int minLen = Convert.ToInt32(numericMinLength.Value);
+                int maxLen = Convert.ToInt32(numericMaxLength.Value);
+                if (minLen <= 0 || maxLen <= 0 || minLen > maxLen)
+                {
+                    MessageBox.Show("Lütfen geçerli bir min/max uzunluk seçin.", "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                ToBeTried = 0;
+                for (int i = minLen; i <= maxLen; i++)
+                    ToBeTried += Math.Pow((double)Alphabeth.Length, i);
+                lblToBeTried.Text = "Denenecek :" + ToBeTried.ToString("N0");
+
+
+                cts = new CancellationTokenSource();
+                var token = cts.Token;
+
+                Task.Run(() => Start(token), token);
+
                 LockForm();
                 lblStartTime.Text = "Başlangıç : " + DateTime.Now.ToString();
                 timer1.Start();
@@ -181,29 +193,94 @@ namespace YK_47_Hash_Cracker
             }
             else
             {
-                UnLockForm();
-                task.Abort();
-                task = null;
+                cts?.Cancel();
                 btnStartStop.Text = "Başlat";
+                UnLockForm();
             }
 
         }
+
+
+        private void Start(CancellationToken token)
+        {
+            int minLen = Convert.ToInt32(numericMinLength.Value);
+            int maxLen = Convert.ToInt32(numericMaxLength.Value);
+
+            for (int len = minLen; len <= maxLen; len++)
+            {
+                // currentWord uzunluğu len kadar olsun
+                int[] currentWord = new int[len];
+                for (int i = 0; i < len; i++)
+                    currentWord[i] = Alphabeth[0]; // en küçük karakterle başla
+
+                bool first = true;
+                while (true)
+                {
+                    if (token.IsCancellationRequested)
+                        return;
+
+                    // İlk kelimeyi de dene (first == true)
+                    if (first)
+                    {
+                        Search(currentWord);
+                        first = false;
+                    }
+                    else
+                    {
+                        // sonraki kelimeyi üret; eğer döndü false ise o uzunluktaki kombinasyonlar bitti
+                        if (!NextWord(currentWord, Alphabeth))
+                            break;
+
+                        Search(currentWord);
+                    }
+
+                    // Eğer tüm hedefler bulunduysa çık
+                    bool empty = false;
+                    this.Invoke((Action)(() => empty = listItems.Items.Count == 0));
+                    if (empty) return;
+                }
+            }
+
+            // Tüm uzunluklar bitti
+            this.BeginInvoke((Action)(() =>
+            {
+                timer1.Stop();
+                UnLockForm();
+                MessageBox.Show("Tüm kombinasyonlar bitti ;((");
+                btnStartStop.Text = "Başlat";
+            }));
+        }
+
+        private bool NextWord(int[] word, int[] alph)
+        {
+            for (int pos = word.Length - 1; pos >= 0; pos--)
+            {
+                int idx = Array.IndexOf(alph, word[pos]);
+                if (idx < 0) return false; // beklenmeyen karakter
+
+                if (idx < alph.Length - 1)
+                {
+                    // bu pozisyonu bir sonraki karaktere yükselt
+                    word[pos] = alph[idx + 1];
+                    // sağ tarafı (daha düşük önemli indeksleri) en küçük karaktere sıfırla
+                    for (int j = pos + 1; j < word.Length; j++)
+                        word[j] = alph[0];
+                    return true;
+                }
+                // eğer bu pozisyon son karakterse carry var -> bir yukarı geç
+            }
+
+            // Tüm pozisyonlarda taşma oldu
+            return false;
+        }
+
         private void timer1_Tick(object sender, EventArgs e)
         {
-            Second += 2;
-            if (Second >= 60)
-            {
-                Second = 0;
-                Minute++;
-            }
-            if (Minute >= 60)
-            {
-                Minute = 0;
-                Hour++;
-            }
+            Second += 1; // 2 değil 1
+            if (Second >= 60) { Second = 0; Minute++; }
+            if (Minute >= 60) { Minute = 0; Hour++; }
             lblPassingTime.Text = string.Format("Geçen {0} saat {1} dakika {2} saniye.", Hour, Minute, Second);
-            lblTried.Text = "Denenen : " + Tried.ToString();
-
+            lblTried.Text = "Denenen : " + Tried.ToString("N0");
         }
         private void UnLockForm()
         {
@@ -222,14 +299,10 @@ namespace YK_47_Hash_Cracker
 
         private string IntArrayToConvertString(int[] searchValue)
         {
-            char[] test = new char[searchValue.Length];
-            int i = 0;
-            foreach (int item in searchValue)
-            {
-                test[i] = (char)item;
-                i++;
-            }
-            return new string(test);
+            var sb = new StringBuilder(searchValue.Length);
+            foreach (int ch in searchValue)
+                sb.Append((char)ch);
+            return sb.ToString();
         }
 
         private void Search(int[] searchValue)
@@ -244,79 +317,43 @@ namespace YK_47_Hash_Cracker
                     dataGridView1.Rows.Add(item.ToString(), searchVal);
                     listItems.Items.RemoveAt(listItems.Items.IndexOf(item));
                     if (listItems.Items.Count == 0)
-                        stopTask();
+                    {
+                        UnLockForm();
+                        cts?.Cancel();
+                        btnStartStop.Text = "Başlat";
+                    }
                     break;
                 }
             }
             Tried++;
         }
 
-        private void stopTask()
-        {
-            task.Abort();
-            timer1.Stop();
-        }
-
         private void AlphabethUpdateMethod()
         {
-            Uppercase = null; Lowercase = null; Numeric = null; Special = null; Alphabeth = null; startWord = null; finishWord = null;
-            Lowercase = new int[txtLowChar.Text.Length];
-            foreach (char item in txtLowChar.Text)
-                Lowercase[txtLowChar.Text.ToList().IndexOf(item)] = Convert.ToInt32(item);
+            var lower = txtLowChar.Text.ToCharArray();
+            var upper = txtUpChar.Text.ToCharArray();
+            var num = txtNumeric.Text.ToCharArray();
+            var sym = txtSym.Text.ToCharArray();
 
-            Uppercase = new int[txtUpChar.Text.Length];
-            foreach (char item in txtUpChar.Text)
-                Uppercase[txtUpChar.Text.ToList().IndexOf(item)] = Convert.ToInt32(item);
+            List<int> alpha = new List<int>();
 
-            Numeric = new int[txtNumeric.Text.Length];
-            foreach (char item in txtNumeric.Text)
-                Numeric[txtNumeric.Text.ToList().IndexOf(item)] = Convert.ToInt32(item);
-
-            Special = new int[txtSym.Text.Length];
-            foreach (char item in txtSym.Text)
-                Special[txtSym.Text.ToList().IndexOf(item)] = Convert.ToInt32(item);
-
-            int alphabethCount = 0;
             if (checkBoxLowCh.Checked)
-                alphabethCount += Lowercase.Length;
+                foreach (var c in lower)
+                    if (!alpha.Contains((int)c)) alpha.Add((int)c);
             if (checkBoxNum.Checked)
-                alphabethCount += Numeric.Length;
+                foreach (var c in num)
+                    if (!alpha.Contains((int)c)) alpha.Add((int)c);
             if (checkBoxSym.Checked)
-                alphabethCount += Special.Length;
+                foreach (var c in sym)
+                    if (!alpha.Contains((int)c)) alpha.Add((int)c);
             if (checkBoxUpCh.Checked)
-                alphabethCount += Uppercase.Length;
-            Alphabeth = new int[alphabethCount];
+                foreach (var c in upper)
+                    if (!alpha.Contains((int)c)) alpha.Add((int)c);
 
-            int i = 0;
-            if (checkBoxLowCh.Checked)
-                foreach (int ch in Lowercase)
-                {
-                    Alphabeth[i] = ch;
-                    i++;
-                }
-            if (checkBoxNum.Checked)
-                foreach (char ch in Numeric)
-                {
-                    Alphabeth[i] = ch;
-                    i++;
-                }
-            if (checkBoxSym.Checked)
-                foreach (char ch in Special)
-                {
-                    Alphabeth[i] = ch;
-                    i++;
-                }
-            if (checkBoxUpCh.Checked)
-                foreach (char ch in Uppercase)
-                {
-                    Alphabeth[i] = ch;
-                    i++;
-                }
-            foreach (int item in Alphabeth)
-            {
-                lblAlphabe.Text += Convert.ToChar(item);
-            }
+            Alphabeth = alpha.ToArray();
 
+            // gösterim
+            lblAlphabe.Text = new string(Alphabeth.Select(i => (char)i).ToArray());
         }
         private void StartAndFinishWordUpdate()
         {
@@ -330,81 +367,49 @@ namespace YK_47_Hash_Cracker
         }
         private void DataControl()
         {
+            bool add = true;
             if (txtItems.Text.Length == 32)
             {
-                listItems.Items.Add(txtItems.Text.ToUpper());
                 dataType[0] = true;
             }
             else if (txtItems.Text.Length == 40)
             {
-                listItems.Items.Add(txtItems.Text.ToUpper());
                 dataType[1] = true;
             }
             else if (txtItems.Text.Length == 48)
             {
-                listItems.Items.Add(txtItems.Text.ToUpper());
                 dataType[2] = true;
             }
             else if (txtItems.Text.Length == 56)
             {
-                listItems.Items.Add(txtItems.Text.ToUpper());
                 dataType[3] = true;
             }
             else if (txtItems.Text.Length == 64)
             {
-                listItems.Items.Add(txtItems.Text.ToUpper());
                 dataType[4] = true;
             }
             else if (txtItems.Text.Length == 80)
             {
-                listItems.Items.Add(txtItems.Text.ToUpper());
                 dataType[5] = true;
             }
             else if (txtItems.Text.Length == 96)
             {
-                listItems.Items.Add(txtItems.Text.ToUpper());
                 dataType[6] = true;
             }
             else if (txtItems.Text.Length == 128)
             {
-                listItems.Items.Add(txtItems.Text.ToUpper());
                 dataType[7] = true;
             }
             else
             {
-                if (MessageBox.Show("Bu veri tanınan hash algoritmalarının sonuçlarına benzemiyor. Yinede eklemek istiyormusunuz ?", "Sorun", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                    listItems.Items.Add(txtItems.Text.ToUpper());
-                dataType[8] = true;
+                if (MessageBox.Show("Bu veri tanınan hash algoritmalarının sonuçlarına benzemiyor. Yinede eklemek istiyormusunuz ?", "Sorun", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+                    add = false;
+                else
+                    dataType[8] = true;
             }
-        }
-        private void Start()
-        {
-            while (listItems.Items.Count != 0)
-            {
-                foreach (int item in Alphabeth)
-                {
-                    startWord[ChangePoint] = item;
-                    Search(startWord);
-                }
-                plusMet(1);
-            }
-        }
-        private void plusMet(int order)
-        {
-            if (order == startWord.Length)
-            {
-                stopTask();
-                return;
-            }
-            if (startWord[order] == Alphabeth[Alphabeth.Length - 1])
-            {
-                plusMet(order + 1);
-                startWord[order] = Alphabeth[0];
-            }
-            else
-            {
-                startWord[order] = Alphabeth[Alphabeth.ToList().IndexOf(startWord[order]) + 1];
-            }
+            if (add)
+                listItems.Items.Add(txtItems.Text.Trim().ToUpperInvariant());
+
         }
     }
 }
