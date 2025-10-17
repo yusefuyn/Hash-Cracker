@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -26,14 +28,19 @@ namespace YK_47_Hash_Cracker
         private int Second = 0, Minute = 0, Hour = 0, ChangePoint = 0, Tried = 0;
         private int[] Uppercase, Lowercase, Numeric, Special, Alphabeth, startWord, finishWord;
         bool[] dataType = new bool[] { false, false, false, false, false, false, false, false, false, false, false };
-        private double ToBeTried = 0;
 
         private Manager hashMan = new Manager();
         private HashType.Type _type = HashType.Type.MD5;
         private CancellationTokenSource cts = null;
 
+        private ConcurrentDictionary<string, byte> targets; // thread-safe hedef seti (value unused)
+        private long triedCounter = 0, maxTried = 0, lastUiUpdateTicks = 0;
+        private int progressUpdateInterval = 1000;
+        private ThreadLocal<Manager> threadLocalManager;
+
         private void btnSearchItemAdd_Click(object sender, EventArgs e)
         {
+            listItems.Items.Add(txtItems.Text.ToUpper());
             DataControl();
             txtItems.Text = "";
         }
@@ -126,6 +133,9 @@ namespace YK_47_Hash_Cracker
             else if (comboMethod.SelectedIndex == 9)
                 _type = Create.Hash.Enumerators.HashType.Type.SHAKE256;
         }
+
+
+
         private void btnStartStop_Click(object sender, EventArgs e)
         {
 
@@ -162,9 +172,12 @@ namespace YK_47_Hash_Cracker
                         return;
                 }
 
-                Second = 0; Minute = 0; Hour = 0; ChangePoint = 0; Tried = 0; ToBeTried = 0;
+                Second = 0; Minute = 0; Hour = 0; ChangePoint = 0; Tried = 0;
 
                 AlphabethUpdateMethod();
+                maxTried = CalculateCombine();
+                progressBar1.Minimum = 0;
+                progressBar1.Maximum = int.MaxValue - 1;
                 StartAndFinishWordUpdate();
 
                 int minLen = Convert.ToInt32(numericMinLength.Value);
@@ -175,21 +188,30 @@ namespace YK_47_Hash_Cracker
                     return;
                 }
 
-                ToBeTried = 0;
-                for (int i = minLen; i <= maxLen; i++)
-                    ToBeTried += Math.Pow((double)Alphabeth.Length, i);
-                lblToBeTried.Text = "Denenecek :" + ToBeTried.ToString("N0");
+                targets = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+                foreach (var it in listItems.Items)
+                {
+                    string s = it.ToString().Trim().ToUpperInvariant();
+                    targets.TryAdd(s, 0);
+                }
 
+                // threadpool'ü ısıt
+                int procCount = Environment.ProcessorCount;
+                ThreadPool.SetMinThreads(procCount * 2, procCount * 2);
+
+                // process priority
+                try { Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.High; } catch { }
 
                 cts = new CancellationTokenSource();
                 var token = cts.Token;
 
-                Task.Run(() => Start(token), token);
-
+                // UI lock + hesaplamalar
                 LockForm();
-                lblStartTime.Text = "Başlangıç : " + DateTime.Now.ToString();
+                lblStartTime.Text = DateTime.Now.ToString();
                 timer1.Start();
                 btnStartStop.Text = "Durdur";
+
+                Task.Run(() => StartParallelByWorkers(token), token);
             }
             else
             {
@@ -201,87 +223,170 @@ namespace YK_47_Hash_Cracker
         }
 
 
-        private void Start(CancellationToken token)
+        private void StartParallelByWorkers(CancellationToken token)
         {
             int minLen = Convert.ToInt32(numericMinLength.Value);
             int maxLen = Convert.ToInt32(numericMaxLength.Value);
 
-            for (int len = minLen; len <= maxLen; len++)
+            // hedefleri kopyala
+            targets = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+            foreach (var it in listItems.Items) targets.TryAdd(it.ToString().Trim().ToUpperInvariant(), 0);
+
+
+            // paralelik için lazımalrs
+            int workers = Environment.ProcessorCount;
+            int alphN = Alphabeth.Length;
+            int chunk = (int)Math.Ceiling((double)alphN / workers);
+
+            // görev says
+            var tasks = new List<Task>();
+            triedCounter = 0;
+            threadLocalManager = new ThreadLocal<Manager>(() => new Manager());
+
+            for (int w = 0; w < workers; w++)
             {
-                // currentWord uzunluğu len kadar olsun
-                int[] currentWord = new int[len];
-                for (int i = 0; i < len; i++)
-                    currentWord[i] = Alphabeth[0]; // en küçük karakterle başla
+                int start = w * chunk;
+                int end = Math.Min(start + chunk, alphN);
 
-                bool first = true;
-                while (true)
+                if (start >= end) continue;
+
+                tasks.Add(Task.Run(() =>
                 {
-                    if (token.IsCancellationRequested)
-                        return;
-
-                    // İlk kelimeyi de dene (first == true)
-                    if (first)
+                    var mgr = threadLocalManager.Value;
+                    for (int i = start; i < end; i++)
                     {
-                        Search(currentWord);
-                        first = false;
-                    }
-                    else
-                    {
-                        // sonraki kelimeyi üret; eğer döndü false ise o uzunluktaki kombinasyonlar bitti
-                        if (!NextWord(currentWord, Alphabeth))
-                            break;
+                        int prefix = Alphabeth[i];
+                        for (int len = minLen; len <= maxLen; len++)
+                        {
+                            if (token.IsCancellationRequested) return;
 
-                        Search(currentWord);
-                    }
+                            if (len < 1) continue;
+                            int[] current = new int[len];
+                            current[0] = prefix;
+                            for (int k = 1; k < len; k++) current[k] = Alphabeth[0];
 
-                    // Eğer tüm hedefler bulunduysa çık
-                    bool empty = false;
-                    this.Invoke((Action)(() => empty = listItems.Items.Count == 0));
-                    if (empty) return;
+                            bool first = true;
+                            while (true)
+                            {
+                                if (token.IsCancellationRequested) return;
+
+                                if (first) { ProcessAttempt(current, mgr); first = false; }
+                                else
+                                {
+                                    if (!NextWordWithPrefix(current, Alphabeth, prefix)) break;
+                                    ProcessAttempt(current, mgr);
+                                }
+
+                                if (targets.IsEmpty) { cts?.Cancel(); return; }
+                            }
+                        }
+                    }
+                }, token));
+            }
+
+            try { Task.WaitAll(tasks.ToArray()); }
+            catch (AggregateException) { /* iptal edildi */ }
+            finally
+            {
+                if (threadLocalManager != null)
+                {
+                    threadLocalManager.Dispose();
                 }
             }
 
-            // Tüm uzunluklar bitti
             this.BeginInvoke((Action)(() =>
             {
                 timer1.Stop();
                 UnLockForm();
-                MessageBox.Show("Tüm kombinasyonlar bitti ;((");
                 btnStartStop.Text = "Başlat";
+                MessageBox.Show(targets.IsEmpty ? "Tüm hedefler bulundu." : "İşlem tamamlandı / iptal edildi.");
             }));
         }
 
-        private bool NextWord(int[] word, int[] alph)
+
+        private void ProcessAttempt(int[] word, Manager localHashMan)
         {
-            for (int pos = word.Length - 1; pos >= 0; pos--)
+            string plain = IntArrayToConvertString(word);
+            string hashed = localHashMan.Hash(_type, plain);
+
+            // kontrol 
+            if (targets.TryRemove(hashed, out _))
+            {
+                // bulundu 
+                this.BeginInvoke((Action)(() =>
+                {
+                    dataGridView1.Rows.Add(hashed, plain);
+                    // listItems kaldır
+                    for (int i = listItems.Items.Count - 1; i >= 0; i--)
+                    {
+                        if (listItems.Items[i].ToString().Equals(hashed, StringComparison.OrdinalIgnoreCase))
+                        {
+                            listItems.Items.RemoveAt(i);
+                            break;
+                        }
+                    }
+                }));
+            }
+
+            // sayacı artır 
+            triedCounter = Interlocked.Increment(ref triedCounter);
+
+            // ui yenileme
+            if (triedCounter % progressUpdateInterval == 0)
+            {
+                // kontrol
+                long ticks = Stopwatch.GetTimestamp();
+                long elapsedTicks = ticks - Interlocked.Read(ref lastUiUpdateTicks);
+                double ms = (elapsedTicks * 1000.0) / Stopwatch.Frequency;
+                if (ms >= 100) // 100 yada 200ms ideal
+                {
+                    Interlocked.Exchange(ref lastUiUpdateTicks, ticks);
+                    this.BeginInvoke((Action)(() =>
+                    {
+                        lblTried.Text = triedCounter.ToString();
+                        lblTriedItem.Text = plain;
+                        lblTriedHashItem.Text = hashed;
+                        progressBar1.Value = (int)((double)triedCounter / maxTried * progressBar1.Maximum);
+
+                    }));
+                }
+            }
+        }
+
+        private bool NextWordWithPrefix(int[] word, int[] alph, int prefix)
+        {
+            for (int pos = word.Length - 1; pos >= 1; pos--) // 0'ı sabit tut
+                                                             // NextWord ile prefix uyumlu varyant:
+                                                             // sağdan sola increment eder, fakat 0. pozisyon (prefix) sabit kalır.
             {
                 int idx = Array.IndexOf(alph, word[pos]);
-                if (idx < 0) return false; // beklenmeyen karakter
-
+                if (idx < 0) return false;
                 if (idx < alph.Length - 1)
                 {
-                    // bu pozisyonu bir sonraki karaktere yükselt
                     word[pos] = alph[idx + 1];
-                    // sağ tarafı (daha düşük önemli indeksleri) en küçük karaktere sıfırla
                     for (int j = pos + 1; j < word.Length; j++)
                         word[j] = alph[0];
                     return true;
                 }
-                // eğer bu pozisyon son karakterse carry var -> bir yukarı geç
             }
-
-            // Tüm pozisyonlarda taşma oldu
             return false;
         }
 
+
         private void timer1_Tick(object sender, EventArgs e)
         {
-            Second += 1; // 2 değil 1
+            Second += 1;
             if (Second >= 60) { Second = 0; Minute++; }
             if (Minute >= 60) { Minute = 0; Hour++; }
             lblPassingTime.Text = string.Format("Geçen {0} saat {1} dakika {2} saniye.", Hour, Minute, Second);
-            lblTried.Text = "Denenen : " + Tried.ToString("N0");
+            TimeSpan elapsed = DateTime.Now - DateTime.Parse(lblStartTime.Text);
+            double progressRatio = (double)triedCounter / maxTried;
+            TimeSpan estimatedTotal = TimeSpan.FromTicks((long)(elapsed.Ticks / progressRatio));
+            TimeSpan remaining = estimatedTotal - elapsed;
+            label4.Text = $"{remaining:hh\\:mm\\:ss}";
+            label2.Text = $"{estimatedTotal:hh\\:mm\\:ss}";
         }
+
         private void UnLockForm()
         {
             panel1.Visible = true;
@@ -305,27 +410,18 @@ namespace YK_47_Hash_Cracker
             return sb.ToString();
         }
 
-        private void Search(int[] searchValue)
+        public long CalculateCombine()
         {
-            string searchVal = IntArrayToConvertString(searchValue);
-            lblTriedItem.Text = searchVal;
-            lblTriedHashItem.Text = hashMan.Hash(_type, searchVal);
-            foreach (var item in listItems.Items)
+            long max = 0;
+            int alphabetLength = lblAlphabe.Text.Length;
+
+            for (int i = Convert.ToInt32(numericMinLength.Value); i <= numericMaxLength.Value; i++)
             {
-                if (lblTriedHashItem.Text == item.ToString())
-                {
-                    dataGridView1.Rows.Add(item.ToString(), searchVal);
-                    listItems.Items.RemoveAt(listItems.Items.IndexOf(item));
-                    if (listItems.Items.Count == 0)
-                    {
-                        UnLockForm();
-                        cts?.Cancel();
-                        btnStartStop.Text = "Başlat";
-                    }
-                    break;
-                }
+                double x = Math.Pow(alphabetLength, i);
+                max += (long)x;
             }
-            Tried++;
+            lblCombine.Text = max.ToString();
+            return max;
         }
 
         private void AlphabethUpdateMethod()
@@ -368,48 +464,42 @@ namespace YK_47_Hash_Cracker
         private void DataControl()
         {
             bool add = true;
-            if (txtItems.Text.Length == 32)
+            for (int i = 0; i < listItems.Items.Count; i++)
             {
-                dataType[0] = true;
+                string item = listItems.Items[i].ToString();
+                if (item.Length == 32)
+                {
+                    dataType[0] = true;
+                }
+                else if (item.Length == 40)
+                {
+                    dataType[1] = true;
+                }
+                else if (item.Length == 48)
+                {
+                    dataType[2] = true;
+                }
+                else if (item.Length == 56)
+                {
+                    dataType[3] = true;
+                }
+                else if (item.Length == 64)
+                {
+                    dataType[4] = true;
+                }
+                else if (item.Length == 80)
+                {
+                    dataType[5] = true;
+                }
+                else if (item.Length == 96)
+                {
+                    dataType[6] = true;
+                }
+                else if (item.Length == 128)
+                {
+                    dataType[7] = true;
+                }
             }
-            else if (txtItems.Text.Length == 40)
-            {
-                dataType[1] = true;
-            }
-            else if (txtItems.Text.Length == 48)
-            {
-                dataType[2] = true;
-            }
-            else if (txtItems.Text.Length == 56)
-            {
-                dataType[3] = true;
-            }
-            else if (txtItems.Text.Length == 64)
-            {
-                dataType[4] = true;
-            }
-            else if (txtItems.Text.Length == 80)
-            {
-                dataType[5] = true;
-            }
-            else if (txtItems.Text.Length == 96)
-            {
-                dataType[6] = true;
-            }
-            else if (txtItems.Text.Length == 128)
-            {
-                dataType[7] = true;
-            }
-            else
-            {
-                if (MessageBox.Show("Bu veri tanınan hash algoritmalarının sonuçlarına benzemiyor. Yinede eklemek istiyormusunuz ?", "Sorun", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
-                    add = false;
-                else
-                    dataType[8] = true;
-            }
-            if (add)
-                listItems.Items.Add(txtItems.Text.Trim().ToUpperInvariant());
-
         }
     }
 }

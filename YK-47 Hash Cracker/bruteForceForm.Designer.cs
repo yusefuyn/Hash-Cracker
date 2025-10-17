@@ -61,14 +61,23 @@
             this.comboMethod = new System.Windows.Forms.ComboBox();
             this.lblMethod = new System.Windows.Forms.Label();
             this.lblToBeTried = new System.Windows.Forms.Label();
-            this.lblTried = new System.Windows.Forms.Label();
+            this.lblTriedText = new System.Windows.Forms.Label();
             this.lblTriedHashItem = new System.Windows.Forms.Label();
             this.panel4 = new System.Windows.Forms.Panel();
-            this.lblTriedItem = new System.Windows.Forms.Label();
             this.lblPassingTime = new System.Windows.Forms.Label();
             this.lblStartTime = new System.Windows.Forms.Label();
+            this.lblCombine = new System.Windows.Forms.Label();
+            this.lblTried = new System.Windows.Forms.Label();
+            this.lblCombineText = new System.Windows.Forms.Label();
+            this.lblTriedItem = new System.Windows.Forms.Label();
+            this.lblPassingTimeText = new System.Windows.Forms.Label();
+            this.lblStartTimeText = new System.Windows.Forms.Label();
             this.lblAlphabe = new System.Windows.Forms.Label();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
+            this.label1 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericMaxLength)).BeginInit();
@@ -417,14 +426,14 @@
             this.lblToBeTried.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.lblToBeTried.Visible = false;
             // 
-            // lblTried
+            // lblTriedText
             // 
-            this.lblTried.Location = new System.Drawing.Point(12, 26);
-            this.lblTried.Name = "lblTried";
-            this.lblTried.Size = new System.Drawing.Size(200, 23);
-            this.lblTried.TabIndex = 11;
-            this.lblTried.Text = "Denenen Sayısı";
-            this.lblTried.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblTriedText.Location = new System.Drawing.Point(12, 26);
+            this.lblTriedText.Name = "lblTriedText";
+            this.lblTriedText.Size = new System.Drawing.Size(200, 23);
+            this.lblTriedText.TabIndex = 11;
+            this.lblTriedText.Text = "Denenen Sayısı :";
+            this.lblTriedText.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // lblTriedHashItem
             // 
@@ -439,19 +448,69 @@
             // 
             // panel4
             // 
-            this.panel4.Controls.Add(this.lblTriedItem);
+            this.panel4.Controls.Add(this.label4);
+            this.panel4.Controls.Add(this.label3);
+            this.panel4.Controls.Add(this.label2);
+            this.panel4.Controls.Add(this.label1);
             this.panel4.Controls.Add(this.lblPassingTime);
             this.panel4.Controls.Add(this.lblStartTime);
+            this.panel4.Controls.Add(this.lblCombine);
+            this.panel4.Controls.Add(this.lblTried);
+            this.panel4.Controls.Add(this.lblCombineText);
+            this.panel4.Controls.Add(this.lblTriedItem);
+            this.panel4.Controls.Add(this.lblPassingTimeText);
+            this.panel4.Controls.Add(this.lblStartTimeText);
             this.panel4.Controls.Add(this.lblAlphabe);
             this.panel4.Controls.Add(this.lblTriedHashItem);
             this.panel4.Controls.Add(this.lblToBeTried);
-            this.panel4.Controls.Add(this.lblTried);
+            this.panel4.Controls.Add(this.lblTriedText);
             this.panel4.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panel4.Location = new System.Drawing.Point(0, 344);
             this.panel4.Name = "panel4";
             this.panel4.Size = new System.Drawing.Size(718, 236);
             this.panel4.TabIndex = 20;
             this.panel4.Visible = false;
+            // 
+            // lblPassingTime
+            // 
+            this.lblPassingTime.Location = new System.Drawing.Point(218, 95);
+            this.lblPassingTime.Name = "lblPassingTime";
+            this.lblPassingTime.Size = new System.Drawing.Size(200, 23);
+            this.lblPassingTime.TabIndex = 22;
+            this.lblPassingTime.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // lblStartTime
+            // 
+            this.lblStartTime.Location = new System.Drawing.Point(218, 72);
+            this.lblStartTime.Name = "lblStartTime";
+            this.lblStartTime.Size = new System.Drawing.Size(200, 23);
+            this.lblStartTime.TabIndex = 21;
+            this.lblStartTime.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // lblCombine
+            // 
+            this.lblCombine.Location = new System.Drawing.Point(218, 49);
+            this.lblCombine.Name = "lblCombine";
+            this.lblCombine.Size = new System.Drawing.Size(200, 23);
+            this.lblCombine.TabIndex = 20;
+            this.lblCombine.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // lblTried
+            // 
+            this.lblTried.Location = new System.Drawing.Point(218, 26);
+            this.lblTried.Name = "lblTried";
+            this.lblTried.Size = new System.Drawing.Size(200, 23);
+            this.lblTried.TabIndex = 19;
+            this.lblTried.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // lblCombineText
+            // 
+            this.lblCombineText.Location = new System.Drawing.Point(12, 49);
+            this.lblCombineText.Name = "lblCombineText";
+            this.lblCombineText.Size = new System.Drawing.Size(200, 23);
+            this.lblCombineText.TabIndex = 18;
+            this.lblCombineText.Text = "Kombinasyon Sayısı :";
+            this.lblCombineText.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // lblTriedItem
             // 
@@ -464,23 +523,23 @@
             this.lblTriedItem.Text = "Denenen";
             this.lblTriedItem.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // lblPassingTime
+            // lblPassingTimeText
             // 
-            this.lblPassingTime.Location = new System.Drawing.Point(12, 72);
-            this.lblPassingTime.Name = "lblPassingTime";
-            this.lblPassingTime.Size = new System.Drawing.Size(200, 23);
-            this.lblPassingTime.TabIndex = 16;
-            this.lblPassingTime.Text = "Geçen Süre";
-            this.lblPassingTime.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblPassingTimeText.Location = new System.Drawing.Point(12, 95);
+            this.lblPassingTimeText.Name = "lblPassingTimeText";
+            this.lblPassingTimeText.Size = new System.Drawing.Size(200, 23);
+            this.lblPassingTimeText.TabIndex = 16;
+            this.lblPassingTimeText.Text = "Geçen Süre :";
+            this.lblPassingTimeText.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
-            // lblStartTime
+            // lblStartTimeText
             // 
-            this.lblStartTime.Location = new System.Drawing.Point(12, 49);
-            this.lblStartTime.Name = "lblStartTime";
-            this.lblStartTime.Size = new System.Drawing.Size(200, 23);
-            this.lblStartTime.TabIndex = 14;
-            this.lblStartTime.Text = "Başlangıç Süresi";
-            this.lblStartTime.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblStartTimeText.Location = new System.Drawing.Point(12, 72);
+            this.lblStartTimeText.Name = "lblStartTimeText";
+            this.lblStartTimeText.Size = new System.Drawing.Size(200, 23);
+            this.lblStartTimeText.TabIndex = 14;
+            this.lblStartTimeText.Text = "Başlangıç Süresi :";
+            this.lblStartTimeText.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // lblAlphabe
             // 
@@ -497,6 +556,40 @@
             // 
             this.timer1.Interval = 1000;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
+            // 
+            // label1
+            // 
+            this.label1.Location = new System.Drawing.Point(12, 118);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(200, 23);
+            this.label1.TabIndex = 23;
+            this.label1.Text = "Tahmini Toplam Süre :";
+            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // label2
+            // 
+            this.label2.Location = new System.Drawing.Point(218, 118);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(200, 23);
+            this.label2.TabIndex = 24;
+            this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // label3
+            // 
+            this.label3.Location = new System.Drawing.Point(12, 141);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(200, 23);
+            this.label3.TabIndex = 25;
+            this.label3.Text = "Kalan Süre :";
+            this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // label4
+            // 
+            this.label4.Location = new System.Drawing.Point(218, 141);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(200, 23);
+            this.label4.TabIndex = 26;
+            this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // bruteForceForm
             // 
@@ -563,13 +656,22 @@
         private System.Windows.Forms.TextBox txtUpChar;
         private System.Windows.Forms.TextBox txtLowChar;
         private System.Windows.Forms.Label lblToBeTried;
-        private System.Windows.Forms.Label lblTried;
+        private System.Windows.Forms.Label lblTriedText;
         private System.Windows.Forms.Label lblTriedHashItem;
         private System.Windows.Forms.Panel panel4;
         private System.Windows.Forms.Label lblAlphabe;
-        private System.Windows.Forms.Label lblPassingTime;
-        private System.Windows.Forms.Label lblStartTime;
+        private System.Windows.Forms.Label lblPassingTimeText;
+        private System.Windows.Forms.Label lblStartTimeText;
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.Label lblTriedItem;
+        private System.Windows.Forms.Label lblCombineText;
+        private System.Windows.Forms.Label lblPassingTime;
+        private System.Windows.Forms.Label lblStartTime;
+        private System.Windows.Forms.Label lblCombine;
+        private System.Windows.Forms.Label lblTried;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label label3;
     }
 }

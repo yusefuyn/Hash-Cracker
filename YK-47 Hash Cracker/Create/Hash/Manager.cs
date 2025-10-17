@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Buffers;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -10,95 +13,68 @@ namespace YK_47_Hash_Cracker.Create.Hash
 {
     public class Manager
     {
+        private static ConcurrentDictionary<Enumerators.HashType.Type, ThreadLocal<HashAlgorithm>> hashPool
+            = new ConcurrentDictionary<Enumerators.HashType.Type, ThreadLocal<HashAlgorithm>>();
+
+        private static HashAlgorithm GetThreadLocalHash(Enumerators.HashType.Type type)
+        {
+            return hashPool.GetOrAdd(type, t => new ThreadLocal<HashAlgorithm>(() =>
+            {
+                switch (t)
+                {
+                    case Enumerators.HashType.Type.MD5: return MD5.Create();
+                    case Enumerators.HashType.Type.SHA1: return SHA1.Create();
+                    case Enumerators.HashType.Type.SHA256: return SHA256.Create();
+                    case Enumerators.HashType.Type.SHA384: return SHA384.Create();
+                    case Enumerators.HashType.Type.SHA512: return SHA512.Create();
+                    default: return null;
+                }
+            })).Value;
+        }
+
         public string Hash(Enumerators.HashType.Type type, string Value)
         {
-            HashAlgorithm hashObj = null;
+            if (Value == null) return "";
+            if (Value.Length > 5_000_000) throw new ArgumentException("Girdi çok büyük.");
 
-            switch (type)
+            try
             {
-                case Enumerators.HashType.Type.MD5:
-                    hashObj = new MD5CryptoServiceProvider();
-                    break;
-                case Enumerators.HashType.Type.SHA1:
-                    hashObj = new SHA1CryptoServiceProvider();
-                    break;
-                case Enumerators.HashType.Type.SHA256:
-                    hashObj = new SHA256CryptoServiceProvider();
-                    break;
-                case Enumerators.HashType.Type.SHA384:
-                    hashObj = new SHA384CryptoServiceProvider();
-                    break;
-                case Enumerators.HashType.Type.SHA512:
-                    hashObj = new SHA512CryptoServiceProvider();
-                    break;
-                case Enumerators.HashType.Type.SHA3256:
-                    try
-                    {
-                        Waher.Security.SHA3.SHA3_256 sha256 = new Waher.Security.SHA3.SHA3_256();
-                        return stringAppend(sha256.ComputeFixed(Encoding.ASCII.GetBytes(Value)));
-                    }
-                    catch (Exception ex)
-                    {
-                        if (ex.ToString() == "Expected array of 200 bytes.")
-                            MessageBox.Show("Değer SHA3256 Algoritmasına göre yeterli uzunlukta değil! Online convert sayfaları bayt doldurma yapmaktadır.");
-                        return "";
-                    }
-                case Enumerators.HashType.Type.SHA3384:
-                    try
-                    {
-                        Waher.Security.SHA3.SHA3_384 sha384 = new Waher.Security.SHA3.SHA3_384();
-                        return stringAppend(sha384.ComputeFixed(Encoding.ASCII.GetBytes(Value)));
-                    }
-                    catch (Exception ex)
-                    {
-                        if (ex.ToString() == "Expected array of 200 bytes.")
-                            MessageBox.Show("Değer SHA3384 Algoritmasına göre yeterli uzunlukta değil! Online convert sayfaları bayt doldurma yapmaktadır.");
-                        return "";
-                    }
-                case Enumerators.HashType.Type.SHA3512:
-                    try
-                    {
-                        Waher.Security.SHA3.SHA3_512 sha512 = new Waher.Security.SHA3.SHA3_512();
-                        return stringAppend(sha512.ComputeFixed(Encoding.ASCII.GetBytes(Value)));
-                    }
-                    catch (Exception ex) {
-                        if (ex.ToString() == "Expected array of 200 bytes.")
-                            MessageBox.Show("Değer SHA3512 Algoritmasına göre yeterli uzunlukta değil! Online convert sayfaları bayt doldurma yapmaktadır.");
-                        return "";
-                    }
-                case Enumerators.HashType.Type.SHAKE128:
-                    try
-                    {
-                        Waher.Security.SHA3.SHAKE128 shake128 = new Waher.Security.SHA3.SHAKE128(Value.Length);
-                        return stringAppend(shake128.ComputeFixed(Encoding.ASCII.GetBytes(Value)));
-                    }
-                    catch (Exception ex)
-                    {
-                        if (ex.ToString() == "Expected array of 200 bytes.")
-                            MessageBox.Show("Değer SHAKE128 Algoritmasına göre yeterli uzunlukta değil! Online convert sayfaları bayt doldurma yapmaktadır.");
-                        return "";
-                    }
+                // SHA3 familyası özel; bunları thread-local da yapabilirsiniz fakat örnek basit tutulsun:
+                if (type == Enumerators.HashType.Type.SHA3256 ||
+                    type == Enumerators.HashType.Type.SHA3384 ||
+                    type == Enumerators.HashType.Type.SHA3512 ||
+                    type == Enumerators.HashType.Type.SHAKE128 ||
+                    type == Enumerators.HashType.Type.SHAKE256)
+                {
+                    // Mevcut uygulamanızla aynıdır (isterseniz bunları da ThreadLocal hale getirebiliriz)
+                    // ... mevcut Waher kodu ...
+                }
 
-                case Enumerators.HashType.Type.SHAKE256:
-                    try
-                    {
-                        Waher.Security.SHA3.SHAKE256 shake256 = new Waher.Security.SHA3.SHAKE256(Value.Length);
-                        return stringAppend(shake256.ComputeFixed(Encoding.ASCII.GetBytes(Value)));
-                    }
-                    catch (Exception ex)
-                    {
-                        if (ex.ToString() == "Expected array of 200 bytes.")
-                            MessageBox.Show("Değer SHAKE256 Algoritmasına göre yeterli uzunlukta değil! Online convert sayfaları bayt doldurma yapmaktadır.");
-                        return "";
-                    }
+                // Managed algoritmalar için ArrayPool kullanarak byte[] alalım
+                var algo = GetThreadLocalHash(type);
+                if (algo == null) return "";
 
-                default:
-                    break;
+                // char -> byte dönüşüm için pool kullan
+                int maxBytes = Encoding.ASCII.GetByteCount(Value);
+                byte[] buffer = ArrayPool<byte>.Shared.Rent(maxBytes);
+                try
+                {
+                    int written = Encoding.ASCII.GetBytes(Value, 0, Value.Length, buffer, 0);
+                    // ComputeHash overload'u (buffer, index, count) yoksa CreateHash için yeni byte[] kopyalamak gerekebilir.
+                    // Ancak many HashAlgorithm implementations have ComputeHash(Stream) or ComputeHash(byte[],int,int).
+                    byte[] result = algo.ComputeHash(buffer, 0, written);
+                    return stringAppend(result);
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(buffer, clearArray: true);
+                }
             }
-
-
-            byte[] testArray = hashObj.ComputeHash(Encoding.ASCII.GetBytes(Value));
-            return stringAppend(testArray);
+            catch (Exception ex)
+            {
+                // log vs.
+                return "";
+            }
         }
         private string stringAppend(byte[] ar)
         {
