@@ -74,10 +74,7 @@
             this.lblStartTimeText = new System.Windows.Forms.Label();
             this.lblAlphabe = new System.Windows.Forms.Label();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
-            this.label1 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
+            this.button1 = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericMaxLength)).BeginInit();
@@ -89,6 +86,7 @@
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.button1);
             this.panel1.Controls.Add(this.listItems);
             this.panel1.Controls.Add(this.btnExport);
             this.panel1.Controls.Add(this.txtItems);
@@ -100,7 +98,7 @@
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(718, 135);
+            this.panel1.Size = new System.Drawing.Size(718, 163);
             this.panel1.TabIndex = 11;
             // 
             // listItems
@@ -109,7 +107,7 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.listItems.FormattingEnabled = true;
-            this.listItems.Location = new System.Drawing.Point(157, 34);
+            this.listItems.Location = new System.Drawing.Point(157, 60);
             this.listItems.Name = "listItems";
             this.listItems.Size = new System.Drawing.Size(441, 95);
             this.listItems.TabIndex = 0;
@@ -117,7 +115,7 @@
             // btnExport
             // 
             this.btnExport.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnExport.Location = new System.Drawing.Point(604, 78);
+            this.btnExport.Location = new System.Drawing.Point(604, 106);
             this.btnExport.Name = "btnExport";
             this.btnExport.Size = new System.Drawing.Size(108, 23);
             this.btnExport.TabIndex = 9;
@@ -129,7 +127,7 @@
             // 
             this.txtItems.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.txtItems.Location = new System.Drawing.Point(157, 8);
+            this.txtItems.Location = new System.Drawing.Point(157, 34);
             this.txtItems.Name = "txtItems";
             this.txtItems.Size = new System.Drawing.Size(441, 20);
             this.txtItems.TabIndex = 1;
@@ -138,7 +136,7 @@
             // btnInport
             // 
             this.btnInport.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnInport.Location = new System.Drawing.Point(604, 106);
+            this.btnInport.Location = new System.Drawing.Point(604, 134);
             this.btnInport.Name = "btnInport";
             this.btnInport.Size = new System.Drawing.Size(108, 23);
             this.btnInport.TabIndex = 8;
@@ -148,7 +146,7 @@
             // 
             // lblSearchItem
             // 
-            this.lblSearchItem.Location = new System.Drawing.Point(6, 5);
+            this.lblSearchItem.Location = new System.Drawing.Point(6, 31);
             this.lblSearchItem.Name = "lblSearchItem";
             this.lblSearchItem.Size = new System.Drawing.Size(145, 23);
             this.lblSearchItem.TabIndex = 2;
@@ -157,7 +155,7 @@
             // 
             // btnSelectedItemRemove
             // 
-            this.btnSelectedItemRemove.Location = new System.Drawing.Point(604, 35);
+            this.btnSelectedItemRemove.Location = new System.Drawing.Point(604, 61);
             this.btnSelectedItemRemove.Name = "btnSelectedItemRemove";
             this.btnSelectedItemRemove.Size = new System.Drawing.Size(108, 23);
             this.btnSelectedItemRemove.TabIndex = 7;
@@ -167,7 +165,7 @@
             // 
             // lblSearchList
             // 
-            this.lblSearchList.Location = new System.Drawing.Point(6, 28);
+            this.lblSearchList.Location = new System.Drawing.Point(6, 54);
             this.lblSearchList.Name = "lblSearchList";
             this.lblSearchList.Size = new System.Drawing.Size(145, 23);
             this.lblSearchList.TabIndex = 3;
@@ -176,7 +174,7 @@
             // 
             // btnSearchItemAdd
             // 
-            this.btnSearchItemAdd.Location = new System.Drawing.Point(604, 6);
+            this.btnSearchItemAdd.Location = new System.Drawing.Point(604, 32);
             this.btnSearchItemAdd.Name = "btnSearchItemAdd";
             this.btnSearchItemAdd.Size = new System.Drawing.Size(108, 23);
             this.btnSearchItemAdd.TabIndex = 6;
@@ -200,7 +198,7 @@
             this.panel2.Controls.Add(this.checkBoxLowCh);
             this.panel2.Controls.Add(this.lblChar);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panel2.Location = new System.Drawing.Point(0, 135);
+            this.panel2.Location = new System.Drawing.Point(0, 163);
             this.panel2.Name = "panel2";
             this.panel2.Size = new System.Drawing.Size(718, 128);
             this.panel2.TabIndex = 12;
@@ -353,9 +351,9 @@
             this.Column1,
             this.Column2});
             this.dataGridView1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dataGridView1.Location = new System.Drawing.Point(0, 344);
+            this.dataGridView1.Location = new System.Drawing.Point(0, 369);
             this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.Size = new System.Drawing.Size(718, 236);
+            this.dataGridView1.Size = new System.Drawing.Size(718, 233);
             this.dataGridView1.TabIndex = 19;
             // 
             // Column1
@@ -371,7 +369,7 @@
             // progressBar1
             // 
             this.progressBar1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.progressBar1.Location = new System.Drawing.Point(0, 321);
+            this.progressBar1.Location = new System.Drawing.Point(0, 346);
             this.progressBar1.Name = "progressBar1";
             this.progressBar1.Size = new System.Drawing.Size(718, 23);
             this.progressBar1.TabIndex = 18;
@@ -379,7 +377,7 @@
             // btnStartStop
             // 
             this.btnStartStop.Dock = System.Windows.Forms.DockStyle.Top;
-            this.btnStartStop.Location = new System.Drawing.Point(0, 298);
+            this.btnStartStop.Location = new System.Drawing.Point(0, 323);
             this.btnStartStop.Name = "btnStartStop";
             this.btnStartStop.Size = new System.Drawing.Size(718, 23);
             this.btnStartStop.TabIndex = 17;
@@ -392,9 +390,9 @@
             this.panel3.Controls.Add(this.comboMethod);
             this.panel3.Controls.Add(this.lblMethod);
             this.panel3.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panel3.Location = new System.Drawing.Point(0, 263);
+            this.panel3.Location = new System.Drawing.Point(0, 291);
             this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(718, 35);
+            this.panel3.Size = new System.Drawing.Size(718, 32);
             this.panel3.TabIndex = 16;
             // 
             // comboMethod
@@ -448,10 +446,6 @@
             // 
             // panel4
             // 
-            this.panel4.Controls.Add(this.label4);
-            this.panel4.Controls.Add(this.label3);
-            this.panel4.Controls.Add(this.label2);
-            this.panel4.Controls.Add(this.label1);
             this.panel4.Controls.Add(this.lblPassingTime);
             this.panel4.Controls.Add(this.lblStartTime);
             this.panel4.Controls.Add(this.lblCombine);
@@ -465,7 +459,7 @@
             this.panel4.Controls.Add(this.lblToBeTried);
             this.panel4.Controls.Add(this.lblTriedText);
             this.panel4.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel4.Location = new System.Drawing.Point(0, 344);
+            this.panel4.Location = new System.Drawing.Point(0, 366);
             this.panel4.Name = "panel4";
             this.panel4.Size = new System.Drawing.Size(718, 236);
             this.panel4.TabIndex = 20;
@@ -557,45 +551,21 @@
             this.timer1.Interval = 1000;
             this.timer1.Tick += new System.EventHandler(this.timer1_Tick);
             // 
-            // label1
+            // button1
             // 
-            this.label1.Location = new System.Drawing.Point(12, 118);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(200, 23);
-            this.label1.TabIndex = 23;
-            this.label1.Text = "Tahmini Toplam Süre :";
-            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            // 
-            // label2
-            // 
-            this.label2.Location = new System.Drawing.Point(218, 118);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(200, 23);
-            this.label2.TabIndex = 24;
-            this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            // 
-            // label3
-            // 
-            this.label3.Location = new System.Drawing.Point(12, 141);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(200, 23);
-            this.label3.TabIndex = 25;
-            this.label3.Text = "Kalan Süre :";
-            this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            // 
-            // label4
-            // 
-            this.label4.Location = new System.Drawing.Point(218, 141);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(200, 23);
-            this.label4.TabIndex = 26;
-            this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.button1.Location = new System.Drawing.Point(551, 5);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(161, 23);
+            this.button1.TabIndex = 10;
+            this.button1.Text = "WordList\'e geç";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // bruteForceForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(718, 580);
+            this.ClientSize = new System.Drawing.Size(718, 602);
             this.Controls.Add(this.panel4);
             this.Controls.Add(this.dataGridView1);
             this.Controls.Add(this.progressBar1);
@@ -606,7 +576,7 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Name = "bruteForceForm";
-            this.Text = "[Yussefuynstein] Hash Rocker V1.1";
+            this.Text = "[YK-47] Hash BF V1.1";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.bruteForceForm_FormClosing);
             this.Load += new System.EventHandler(this.bruteForceForm_Load);
             this.panel1.ResumeLayout(false);
@@ -669,9 +639,6 @@
         private System.Windows.Forms.Label lblStartTime;
         private System.Windows.Forms.Label lblCombine;
         private System.Windows.Forms.Label lblTried;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Button button1;
     }
 }

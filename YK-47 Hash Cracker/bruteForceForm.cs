@@ -134,7 +134,11 @@ namespace YK_47_Hash_Cracker
                 _type = Create.Hash.Enumerators.HashType.Type.SHAKE256;
         }
 
-
+        private void button1_Click(object sender, EventArgs e)
+        {
+            new dictionaryAttackForm().Show();
+            this.Hide();
+        }
 
         private void btnStartStop_Click(object sender, EventArgs e)
         {
@@ -379,12 +383,6 @@ namespace YK_47_Hash_Cracker
             if (Second >= 60) { Second = 0; Minute++; }
             if (Minute >= 60) { Minute = 0; Hour++; }
             lblPassingTime.Text = string.Format("Geçen {0} saat {1} dakika {2} saniye.", Hour, Minute, Second);
-            TimeSpan elapsed = DateTime.Now - DateTime.Parse(lblStartTime.Text);
-            double progressRatio = (double)triedCounter / maxTried;
-            TimeSpan estimatedTotal = TimeSpan.FromTicks((long)(elapsed.Ticks / progressRatio));
-            TimeSpan remaining = estimatedTotal - elapsed;
-            label4.Text = $"{remaining:hh\\:mm\\:ss}";
-            label2.Text = $"{estimatedTotal:hh\\:mm\\:ss}";
         }
 
         private void UnLockForm()
